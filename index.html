@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Personal Finance Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+  font-family: Arial;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  text-align: center;
+}
+
+.container {
+  width: 350px;
+  margin: auto;
+  background: #1e1e2f;
+  padding: 20px;
+  border-radius: 15px;
+}
+
+input, button {
+  padding: 10px;
+  margin: 5px;
+  width: 90%;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  background: #00c853;
+  color: white;
+  cursor: pointer;
+}
+
+.expense { color: red; }
+.income { color: lightgreen; }
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  background: #2d2d44;
+  margin: 5px;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+</style>
+</head>
+
+<body>
+
+<h2>💰Bhawna Vashisht's Personal Finance Tracker</h2>
+
+<div class="container">
+
+<h3>Balance: ₹ <span id="balance">0</span></h3>
+
+<input type="text" id="desc" placeholder="Description">
+<input type="number" id="amount" placeholder="Amount (+income / -expense)">
+
+<button onclick="addTransaction()">Add Transaction</button>
+
+<h3>History</h3>
+<ul id="list"></ul>
+
+<canvas id="chart"></canvas>
+
+</div>
+
+<script>
+let transactions = JSON.parse(localStorage.getItem("data")) || [];
+
+function updateUI() {
+  let list = document.getElementById("list");
+  list.innerHTML = "";
+
+  let balance = 0;
+  let income = 0;
+  let expense = 0;
+
+  transactions.forEach((t, index) => {
+    balance += t.amount;
+    if (t.amount > 0) income += t.amount;
+    else expense += t.amount;
+
+    let li = document.createElement("li");
+    li.innerHTML = `
+      ${t.desc} 
+      <span class="${t.amount > 0 ? 'income' : 'expense'}">
+        ₹${t.amount}
+      </span>
+      <button onclick="deleteTransaction(${index})">❌</button>
+    `;
+    list.appendChild(li);
+  });
+
+  document.getElementById("balance").innerText = balance;
+
+  localStorage.setItem("data", JSON.stringify(transactions));
+
+  updateChart(income, Math.abs(expense));
+}
+
+function addTransaction() {
+  let desc = document.getElementById("desc").value;
+  let amount = parseFloat(document.getElementById("amount").value);
+
+  if (!desc || isNaN(amount)) {
+    alert("Enter valid data");
+    return;
+  }
+
+  transactions.push({ desc, amount });
+
+  document.getElementById("desc").value = "";
+  document.getElementById("amount").value = "";
+
+  updateUI();
+}
+
+function deleteTransaction(index) {
+  transactions.splice(index, 1);
+  updateUI();
+}
+
+// Chart
+let chart;
+
+function updateChart(income, expense) {
+  let ctx = document.getElementById("chart").getContext("2d");
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["Income", "Expense"],
+      datasets: [{
+        data: [income, expense],
+        backgroundColor: ["#00c853", "#ff3d00"]
+      }]
+    }
+  });
+}
+
+updateUI();
+</script>
+
+</body>
+</html>
